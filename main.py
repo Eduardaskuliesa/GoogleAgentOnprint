@@ -60,14 +60,13 @@ runner = Runner(
 class ChatRequest(BaseModel):
     message: str
     user_id: str
-
-
+    
 @app.post('/chat')
 async def chat_with_agent(request: ChatRequest):
     try:
         session_id = f"session_{request.user_id}"
         
-        # Try to get existing session, create if it doesn't exist
+        
         session = await session_service.get_session(
             app_name="sales_agent_app",
             user_id=request.user_id,

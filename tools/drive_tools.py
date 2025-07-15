@@ -8,11 +8,11 @@ async def get_headers():
        "Content-Type": "application/json"
    }
 
-async def get_folders():
-   """Fetches folders from the Express server"""
+async def get_folders_and_sales_rules():
+   """Fetches folders and Sales agent rules from Express server"""
    try:
        async with httpx.AsyncClient(timeout=30) as client:
-           response = await client.get(f"{settings.EXPRESS_BASE_URL}/api/folders", headers=await get_headers())
+           response = await client.get(f"{settings.EXPRESS_BASE_URL}/api/sales-agent/rules-and-folders", headers=await get_headers())
            
            print(f"API Key: {settings.EXPRESS_API_KEY}")
            if response.status_code == 200:
@@ -25,7 +25,7 @@ async def get_folders():
        return {"success": False, "error": str(e)}
 
 async def get_folder_files_content(file_id: Optional[str] = None, folder_id: Optional[str] = None):
-    """Gets file or folder content from Express server"""
+    """Gets file or folder content from Express server Always first use folderId this way you will get all ifno in one go"""
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             body = {}
