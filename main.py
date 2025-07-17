@@ -5,10 +5,11 @@ from pydantic import BaseModel
 from config.config import settings
 from google.adk.agents import LlmAgent
 from google.adk.sessions import InMemorySessionService
+from google.adk.artifacts import InMemoryArtifactService
 from google.adk.runners import Runner
 from agents.sales_agent import create_sales_agent
-from tools.drive_tools import get_folder_files_content, get_folders
 from google.genai import types
+from google import genai
 
 app = FastAPI(
     title="ADK Agent Server",
@@ -29,43 +30,33 @@ class ContentRequest(BaseModel):
     fileId: str = None
     folderId: str = None
 
+class ChatRequest(BaseModel):
+    message: str
+    user_id: str
 
 @app.get("/health")
 async def health_check():
     return {"status": "OK", "timestamp": "2025-07-09T00:00:00Z"}
 
 
-@app.get("/test-folders")
-async def test_folders():
-    result = await get_folders()
-    return result
-
-
-@app.post("/test-content")
-async def test_content(request: ContentRequest):
-    result = await get_folder_files_content(file_id=request.fileId, folder_id=request.folderId)
-    return result
-
 sales_agent = create_sales_agent()
-
+artifact_service = InMemoryArtifactService()
 session_service = InMemorySessionService()
 
 runner = Runner(
     agent=sales_agent,
     app_name="sales_agent_app",
-    session_service=session_service
+    session_service=session_service,
+    artifact_service=artifact_service
 )
 
 
-class ChatRequest(BaseModel):
-    message: str
-    user_id: str
+
     
 @app.post('/chat')
 async def chat_with_agent(request: ChatRequest):
     try:
         session_id = f"session_{request.user_id}"
-        
         
         session = await session_service.get_session(
             app_name="sales_agent_app",
@@ -74,20 +65,19 @@ async def chat_with_agent(request: ChatRequest):
         )
         
         if not session:
-            # Session doesn't exist, create new one
             session = await session_service.create_session(
                 app_name="sales_agent_app",
                 user_id=request.user_id,
                 session_id=session_id
             )
-            print(f"Created new session for user {request.user_id}")
+            print(f"✅ Created new session for user {request.user_id}")
         else:
-            print(f"Found existing session for user {request.user_id}")
-        
-        # Rest stays the same
+            print(f"🔄 Found existing session for user {request.user_id}")
+                    
         content = types.Content(role='user', parts=[types.Part(text=request.message)])
         
         final_response = "No response generated"
+        
         
         async for event in runner.run_async(
             user_id=request.user_id,
@@ -97,6 +87,8 @@ async def chat_with_agent(request: ChatRequest):
             if event.is_final_response():
                 if event.content and event.content.parts:
                     final_response = event.content.parts[0].text
+                    print(event.content)
+                    print(event)
                 break
         
         return {"response": final_response}
@@ -104,8 +96,11 @@ async def chat_with_agent(request: ChatRequest):
     except Exception as e:
         return {"error": str(e)}
 
+
 if __name__ == "__main__":
-    print(f"🚀 Starting ADK Agent Server on port {settings.PORT}")
+    print(f"🚀 Starting ADK Agent Server with Artifacts on port {settings.PORT}")
+    print(f"💾 Artifact caching: ENABLED (In-Memory)")
+    print(f"🔧 Debug artifacts at: GET /debug/artifacts/{{user_id}}")
     uvicorn.run(
         "main:app",
         host="127.0.0.1",

@@ -11,5 +11,8 @@ class Settings:
     # Express server settings
     EXPRESS_BASE_URL: str = os.getenv("EXPRESS_BASE_URL", "http://localhost:4080")
     EXPRESS_API_KEY: str = os.getenv("EXPRESS_API_KEY", "")
+    
+    # Google GenAI settings
+    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
 
 settings = Settings()
