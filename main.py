@@ -1,15 +1,15 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from pydantic import BaseModel
 from config.config import settings
-from google.adk.agents import LlmAgent
 from google.adk.sessions import InMemorySessionService
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.runners import Runner
 from agents.sales_agent import create_sales_agent
 from google.genai import types
-from google import genai
+
 
 app = FastAPI(
     title="ADK Agent Server",
@@ -30,9 +30,11 @@ class ContentRequest(BaseModel):
     fileId: str = None
     folderId: str = None
 
+
 class ChatRequest(BaseModel):
     message: str
     user_id: str
+
 
 @app.get("/health")
 async def health_check():
@@ -50,20 +52,26 @@ runner = Runner(
     artifact_service=artifact_service
 )
 
+security = HTTPBearer()
 
 
-    
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials.credentials != settings.SERVER_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
+    return credentials.credentials
+
+
 @app.post('/chat')
-async def chat_with_agent(request: ChatRequest):
+async def chat_with_agent(request: ChatRequest, token: str = Depends(verify_token)):
     try:
         session_id = f"session_{request.user_id}"
-        
+
         session = await session_service.get_session(
             app_name="sales_agent_app",
             user_id=request.user_id,
             session_id=session_id
         )
-        
+
         if not session:
             session = await session_service.create_session(
                 app_name="sales_agent_app",
@@ -73,12 +81,12 @@ async def chat_with_agent(request: ChatRequest):
             print(f"✅ Created new session for user {request.user_id}")
         else:
             print(f"🔄 Found existing session for user {request.user_id}")
-                    
-        content = types.Content(role='user', parts=[types.Part(text=request.message)])
-        
+
+        content = types.Content(
+            role='user', parts=[types.Part(text=request.message)])
+
         final_response = "No response generated"
-        
-        
+
         async for event in runner.run_async(
             user_id=request.user_id,
             session_id=session_id,
@@ -90,15 +98,16 @@ async def chat_with_agent(request: ChatRequest):
                     print(event.content)
                     print(event)
                 break
-        
+
         return {"response": final_response}
-        
+
     except Exception as e:
         return {"error": str(e)}
 
 
 if __name__ == "__main__":
-    print(f"🚀 Starting ADK Agent Server with Artifacts on port {settings.PORT}")
+    print(
+        f"🚀 Starting ADK Agent Server with Artifacts on port {settings.PORT}")
     print(f"💾 Artifact caching: ENABLED (In-Memory)")
     print(f"🔧 Debug artifacts at: GET /debug/artifacts/{{user_id}}")
     uvicorn.run(

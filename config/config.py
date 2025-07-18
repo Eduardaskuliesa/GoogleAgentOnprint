@@ -14,5 +14,8 @@ class Settings:
     
     # Google GenAI settings
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    
+    # SERVER API KEY for authentication
+    SERVER_API_KEY: str = os.getenv("SERVER_API_KEY", "")
 
 settings = Settings()

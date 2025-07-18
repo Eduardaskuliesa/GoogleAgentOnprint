@@ -2,12 +2,8 @@ import time
 from typing import Optional
 import httpx
 import json
-from google.adk.tools import tool
 from typing import List, Dict, Any
 from config.config import settings
-from google.adk.agents.callback_context import CallbackContext
-from google.genai import types
-
 # ========== Utility functions (move these to tools/common.py if you want) ==========
 
 def parse_spreadsheet_content(content_json) -> str:
