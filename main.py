@@ -112,7 +112,7 @@ if __name__ == "__main__":
     print(f"🔧 Debug artifacts at: GET /debug/artifacts/{{user_id}}")
     uvicorn.run(
         "main:app",
-        host="127.0.0.1",
+        host="localhost",
         port=settings.PORT,
         reload=settings.DEBUG
     )

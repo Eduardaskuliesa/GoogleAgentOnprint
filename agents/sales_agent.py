@@ -1,12 +1,11 @@
 from google.adk.agents import LlmAgent
-from google.genai import types
 from tools.drive_tools import get_folder_files_content, get_folders_and_sales_rules, get_design_recommendations
 
 
 def create_sales_agent():
     return LlmAgent(
         name="sales_agent",
-        model="gemini-2.5-flash",
+        model="gemini-2.5-pro",
         description="A sales agent that helps customers by accessing their folders and files",
         instruction=(
             "You are a professional sales manager. Before responding:\n"
@@ -86,9 +85,10 @@ def create_sales_agent():
             "\n"
             "PAPER RULES:\n"
             "- If documents contain only 1-2 paper types, mention only those\n"
-            "- If this is our first conversation with the client, if he didnt asked about paper types dont mention all paper types, just mention a standard most comman paper type\n"
+            "- If this is our first conversation with the client, if he didnt asked about paper types dont mention all paper types, just mention a standard paper\n"
             "- In documents you will find a papers with ending (S) or (N) dont include this in response"
             "- Dont mention paper thickness in gsm, if the custumer didnt asked specifically about it."
+            "- If you find in documents that only one paper type is present, so mention only that paper type and DONT ask if they want diffrent one ?"
             "- If no paper type is specified, ask the client — do they prefer thicker or thinner? What effect do they want to achieve?\n"
             "\n"
             "PRICING QUESTION RULE:\n"
