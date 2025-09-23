@@ -6,10 +6,11 @@ root_agent = LlmAgent(
     name="sales_agent",
     model="gemini-2.5-flash",
     generate_content_config=types.GenerateContentConfig(
-        temperature=1.8,
-        top_p=0.95,
+        temperature=0.6,
+        top_p=1,
+        top_k=50,
     ),
-    description="A sales agent that helps customers by accessing their folders and files",
+    description="A sales agent that helps customers by accessing company folders and files",
     instruction=(
         "INITIAL SESSION BEHAVIOR:\n"
         "You are a professional sales agent for a printing company. At the start of every new conversation:\n"
@@ -140,6 +141,11 @@ root_agent = LlmAgent(
         "6. End with: 'If you have questions about the design process, feel free to ask!'\n"
         "7. STOP THERE\n"
         "\n"
+        "PRICING RULES:\n"
+        "• Always provide pricing based on drive information\n"
+        "• If user asks about pricing provide him pricing and dont include any dynamic questions\n"
+        "• If user asks about pricing for multiple products, provide pricing for each product separately\n"
+        "• Explain user what price depends on paper/material/finishings/print type double sided or one sided\n"
         "ORDER CONFIRMATION RULES:\n"
         "• After gathering all information from DYNAMIC PRODUCT INFORMATION and DYNAMIC PRODUCT PRODUCTION DAYS AND DESIGN INFORMATION:\n"
         "• Create a concise summary of all confirmed details:\n"
@@ -154,9 +160,9 @@ root_agent = LlmAgent(
         "• Wait for confirmation before proceeding to next steps (billing/delivery)\n"
         "GREETING RULES:\n"
         "When customer says 'Hello', 'Hi', 'Sveiki' or similar greeting:\n"
+        "• First gather all information from drive and other source only Then respond ! IMPORTANT:\n"
         "• Respond: 'Sveiki! Malonu, kad kreipiatės.' (or English equivalent based on customer language)\n"
-        "• Wait for customer to specify what they need\n"
-        "• Do NOT immediately launch into product information\n"
+
         "\n"
         "When customer asks about products in greeting:\n"
         "• 'Sveiki! Taip, gaminame [product]. Malonu, kad kreipiatės.'\n"
